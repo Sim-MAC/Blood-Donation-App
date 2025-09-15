@@ -42,7 +42,7 @@ Streamlitを使用して作成されています。
 1. **リポジトリをクローン:**
    ```bash
    git clone https://github.com/Sim-MAC/Blood-Donation-App.git
-   cd Blood-Donation-AppBlood-Donation-App
+   cd Blood-Donation-App
    ```
 
 2. **必要なライブラリをインストール:**
