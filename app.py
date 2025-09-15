@@ -23,7 +23,7 @@ init_session_state()
 ALL_TYPES = ["400ml全血", "200ml全血", "成分献血"]
 MAX_VOLUME = {"男性": 1200, "女性": 800}
 today = datetime.date.today()
-LOCATIONS_CSV_PATH = Path("/home/mac/locations.csv")
+LOCATIONS_CSV_PATH = Path("locations.csv")
 
 REGIONS = {
     "北海道": ["北海道"],
