@@ -6,6 +6,7 @@ import uuid
 from streamlit_calendar import calendar
 from collections import Counter
 from pathlib import Path
+import pytz
 
 # --- Page Config ---
 st.set_page_config(page_title="献血カレンダー", page_icon="💉", layout="wide")
@@ -40,10 +41,17 @@ REGIONS = {
 @st.cache_data
 def load_locations():
     if not LOCATIONS_CSV_PATH.exists():
-        st.error(f"{LOCATIONS_CSV_PATH} が見つかりません。")
-        return pd.DataFrame()
+        # Attempt to use a relative path for Streamlit Cloud
+        alt_path = Path(__file__).parent / "locations.csv"
+        if not alt_path.exists():
+            st.error(f"locations.csv が見つかりません。")
+            return pd.DataFrame()
+        csv_path = alt_path
+    else:
+        csv_path = LOCATIONS_CSV_PATH
+
     try:
-        df = pd.read_csv(LOCATIONS_CSV_PATH)
+        df = pd.read_csv(csv_path)
         for col in ["name", "latitude", "longitude", "prefecture"]:
             if col not in df.columns:
                 st.error(f"locations.csvに必須の列 '{col}' がありません。")
@@ -105,10 +113,11 @@ def check_availability(target_date, history, gender, birthday):
             
             if volume_in_year + get_volume(don_type) > MAX_VOLUME[gender]:
                 donations_in_window = [h for h in sorted_history if (target_date - relativedelta(years=1)) <= datetime.datetime.strptime(h['start'], "%Y-%m-%d").date() < target_date and "全血" in h['title']]
-                first_donation_in_window = min(donations_in_window, key=lambda x: x['start'])
-                block_lift_date = datetime.datetime.strptime(first_donation_in_window['start'], "%Y-%m-%d").date() + relativedelta(years=1)
-                results[don_type] = {"available": False, "reason": "年間総採血量上限", "next": block_lift_date.strftime("%Y-%m-%d")}
-                continue
+                if donations_in_window:
+                    first_donation_in_window = min(donations_in_window, key=lambda x: x['start'])
+                    block_lift_date = datetime.datetime.strptime(first_donation_in_window['start'], "%Y-%m-%d").date() + relativedelta(years=1)
+                    results[don_type] = {"available": False, "reason": "年間総採血量上限", "next": block_lift_date.strftime("%Y-%m-%d")}
+                    continue
         
         results[don_type] = {"available": True}
     return results
@@ -191,8 +200,12 @@ def render_calendar_view():
 
     if state.get("datesSet"): st.session_state.calendar_view_date = state["datesSet"]["start"]
     if state.get("dateClick"): 
-        dt_obj = datetime.datetime.fromisoformat(state["dateClick"]["date"].replace('Z', '+00:00'))
-        actual_date = dt_obj.astimezone(None).date()
+        # Final Fix for Timezone: Convert UTC date from calendar to JST explicitly.
+        dt_obj_utc = datetime.datetime.fromisoformat(state["dateClick"]["date"].replace('Z', '+00:00'))
+        jst = pytz.timezone('Asia/Tokyo')
+        dt_obj_jst = dt_obj_utc.astimezone(jst)
+        actual_date = dt_obj_jst.date()
+
         st.session_state.calendar_view_date = actual_date.strftime("%Y-%m-01")
         availability = check_availability(actual_date, st.session_state.history, gender, birthday)
         show_form(actual_date, availability)
@@ -220,7 +233,6 @@ def render_map_view():
     st.markdown("### 全国制覇状況")
     prefecture_stats = locations_df.groupby("prefecture")["visited"].agg(['sum', 'count']).rename(columns={'sum': 'visited', 'count': 'total'})
 
-    # Custom progress bar HTML
     def create_progress_bar(progress, color):
         return f"""
         <div style="background-color: #ddd; border-radius: 5px; height: 24px; width: 100%;">
@@ -260,5 +272,7 @@ def render_map_view():
 # --- Main App Router ---
 if app_mode == "カレンダー":
     render_calendar_view()
+elif app_mode == "献血マップ":
+    render_map_view()
 elif app_mode == "献血マップ":
     render_map_view()
