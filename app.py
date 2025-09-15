@@ -157,7 +157,6 @@ def render_calendar_view():
                 color = "#4CAF50" if "成分" in donation_type else "#FF4C4C"
                 new_record = {"id": str(uuid.uuid4()), "title": donation_type, "start": target_date.strftime("%Y-%m-%d"), "location": final_location, "notes": notes, "color": color}
                 st.session_state.history.append(new_record)
-                st.rerun()
 
     def show_edit_form(record):
         st.sidebar.markdown("### 記録の編集")
