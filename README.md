@@ -26,9 +26,7 @@ Streamlitを使用して作成されています。
 
 このアプリケーションは、以下のURLからアクセスできます。
 
-[https://your-app-name.streamlit.app](https://your-app-name.streamlit.app)
-
-（※↑ Streamlit Community Cloudでデプロイした後に、ご自身のURLに書き換えてください）
+[https://blood-donation-app-edx4gbxpeeavzss6ywh7uf.streamlit.app]([https://your-app-name.streamlit.app](https://blood-donation-app-edx4gbxpeeavzss6ywh7uf.streamlit.app))
 
 ## 🛠️ 使用技術
 
